@@ -1,18 +1,16 @@
-import 'dart:math';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
 import 'package:ninja_prime/ninja_prime.dart';
 import 'package:ninja_asn1/ninja_asn1.dart';
-import 'package:bip39_seeded_rsa/src/seeded_random.dart';
+import 'package:seeded_rsa/src/seeded_random.dart';
 
-class RSAKey {
+class SeededRSA {
   static const int PEM_CHAR_LINE_SIZE = 64;
   late BigInt n, d, p, q, dmp1, dmq1, coeff, e = BigInt.zero;
   late String seed;
   late SeededRandom seededRandom = SeededRandom(seed);
 
-  RSAKey(this.seed);
+  SeededRSA(this.seed);
 
 
   BigInt _getPrime(int keySize){
@@ -29,7 +27,7 @@ class RSAKey {
     for(var i = 0; i < pkeyb64.length; i+=PEM_CHAR_LINE_SIZE) {
       var i64 = i+PEM_CHAR_LINE_SIZE;
       if(i64 > pkeyb64.length) i64 = pkeyb64.length;
-      pemString+=pkeyb64.substring(i, i64) + "\n";
+      pemString+="${pkeyb64.substring(i, i64)}\n";
     }
     pemString += "-----END $key-----";
     return pemString;
@@ -53,14 +51,14 @@ class RSAKey {
   }
 
   String publicBaseKey() {
-    var second_sequence = ASN1Sequence(
+    var secondSequence = ASN1Sequence(
       [
         ASN1Integer(n),
         ASN1Integer(e)
       ]
       );
 
-    String sq =  "00" + base64Encode(second_sequence.encode()).toString();
+    String sq =  "00${base64Encode(secondSequence.encode())}";
     var seq = ASN1Sequence(
       [
         ASN1ObjectIdentifier.fromString('1.2.840.113549.1.1.1'),
