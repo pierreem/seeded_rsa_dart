@@ -18,8 +18,10 @@ platforms:
 dependencies:
   bip39: ^1.0.6
   crypto: ^3.0.2
+  fast_rsa: ^3.5.1
   ninja_asn1: ^2.0.0
   ninja_prime: ^2.0.0
+
 
 dev_dependencies:
   lints: ^2.0.0

@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:typed_data';
-import 'package:ninja_prime/ninja_prime.dart';
+import 'package:fast_rsa/fast_rsa.dart';
 import 'package:ninja_asn1/ninja_asn1.dart';
 import 'package:seeded_rsa/src/seeded_random.dart';
 
 class SeededRSA {
   static const int PEM_CHAR_LINE_SIZE = 64;
+  static const String PRIVATE_KEY = "privateKey", PUBLIC_KEY = "publicKey";
   late BigInt n, d, p, q, dmp1, dmq1, coeff, e = BigInt.zero;
   late String seed;
 
@@ -22,7 +22,9 @@ class SeededRSA {
     return pemString;
   }
 
-   String privateKey() {
+
+  late String privateKey = _lazyAssemblePrivateKey();
+   String _lazyAssemblePrivateKey() {
     final original = ASN1Sequence(
       [
       ASN1Integer(BigInt.zero),
@@ -39,29 +41,16 @@ class SeededRSA {
     return _toPem(base64Encode(original.encode()));
   }
 
-  String publicBaseKey() {
-    var secondSequence = ASN1Sequence(
-      [
-        ASN1Integer(n),
-        ASN1Integer(e)
-      ]
-      );
-
-    String sq =  "00${base64Encode(secondSequence.encode())}";
-    var seq = ASN1Sequence(
-      [
-        ASN1ObjectIdentifier.fromString('1.2.840.113549.1.1.1'),
-        ASN1Null(),
-        ASN1BitString(Uint8List.fromList(sq.codeUnits))
-      ]
-      );
-
-    return _toPem(base64Encode(seq.encode()), key: "RSA PUBLIC KEY");
+  late String publicKey;
+  Future<String> _lazyAssemblePublicKey() async {
+    return await RSA.convertPrivateKeyToPublicKey(privateKey);
   }
 
 
   Future<Map<String,String>> generate({int keySize = 2048, String exposant = "65537"}) async {
     var seededRandom = SeededRandom(seed);
+    await seededRandom.basedDerivation();
+
     var qs = keySize >> 1;
     e = BigInt.parse(exposant,radix: 16);
     var exponent = BigInt.parse(exposant, radix: 16);
@@ -94,12 +83,12 @@ class SeededRSA {
         }
     }
 
-    var key = {
-      'privateKey': privateKey(),
-      'publicKey': publicBaseKey()
-    };
+    publicKey = await _lazyAssemblePublicKey();
 
-    return key;
+    return {
+      PRIVATE_KEY: privateKey,
+      PUBLIC_KEY: publicKey
+    };
   }
 
 

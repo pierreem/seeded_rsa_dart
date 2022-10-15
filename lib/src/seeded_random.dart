@@ -1,21 +1,26 @@
-import 'package:crypto/crypto.dart';
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:fast_rsa/fast_rsa.dart';
 import 'dart:math';
 import 'package:ninja_prime/ninja_prime.dart';
 
 class SeededRandom {
-  late Digest digest;
+  late String digest;
   SeededRandom(String mnemonic) {
     if(bip39.validateMnemonic(mnemonic)){
-      print("valid mnemonic");
-      digest = sha512.convert(bip39.mnemonicToSeed(mnemonic));
+      digest = bip39.mnemonicToSeedHex(mnemonic);
     } else {
-      digest = sha512.convert(mnemonic.codeUnits);
+      digest = mnemonic;
     }
+  }
 
-    //based derivations
-    for(var i = 0 ; i < 2048; i++) {
-      digest = sha512.convert(digest.bytes);
+  Future<void> basedDerivation() async {
+    await _derivation(2048);
+  }
+
+  Future<void> _derivation(int left) async {
+    if(left > 0){
+      digest = await RSA.hash(digest, Hash.SHA512);
+      await _derivation(left-1);
     }
   }
 
@@ -25,10 +30,10 @@ class SeededRandom {
   int getKeySizeInDecimal(int keysize) => -(-(keysize * log(2)/log(10))).floor();
 
   BigInt _getNextBigInt(int size) {
-    var bigIntStr = digest.bytes.join();
+    var bigIntStr = digest.codeUnits.join();
     while(bigIntStr.length < size){
-      digest = sha512.convert(digest.bytes);
-      bigIntStr += digest.bytes.join();
+      _derivation(1);
+      bigIntStr += digest.codeUnits.join();
     }
 
     bigIntStr = bigIntStr.substring(0,size);
