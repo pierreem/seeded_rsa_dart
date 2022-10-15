@@ -7,7 +7,6 @@ class SeededRandom {
   late Digest digest;
   SeededRandom(String mnemonic) {
     if(bip39.validateMnemonic(mnemonic)){
-      print("valid mnemonic");
       digest = sha512.convert(bip39.mnemonicToSeed(mnemonic));
     } else {
       digest = sha512.convert(mnemonic.codeUnits);
