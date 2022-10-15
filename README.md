@@ -37,3 +37,5 @@ await seededRSA.generate()
 
 This library isn't tested or review
 Do not used it, or do the review/evaluation yourself ;-)
+
+Starded by porting https://github.com/nomadcrypto/seededrsa but finally made totaly diffrently ;-)

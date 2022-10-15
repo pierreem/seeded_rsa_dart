@@ -8,19 +8,8 @@ class SeededRSA {
   static const int PEM_CHAR_LINE_SIZE = 64;
   late BigInt n, d, p, q, dmp1, dmq1, coeff, e = BigInt.zero;
   late String seed;
-  late SeededRandom seededRandom = SeededRandom(seed);
 
   SeededRSA(this.seed);
-
-
-  BigInt _getPrime(int keySize){
-    var r = seededRandom.randomPrimeBigInt(keySize);
-
-    while(!r.isPrime()){
-      r = seededRandom.randomPrimeBigInt(keySize);
-    }
-    return r;
-  }
 
   String _toPem(String pkeyb64, {String key = "RSA PRIVATE KEY"}){
     String pemString = "-----BEGIN $key-----\n";
@@ -72,6 +61,7 @@ class SeededRSA {
 
 
   Future<Map<String,String>> generate({int keySize = 2048, String exposant = "65537"}) async {
+    var seededRandom = SeededRandom(seed);
     var qs = keySize >> 1;
     e = BigInt.parse(exposant,radix: 16);
     var exponent = BigInt.parse(exposant, radix: 16);
@@ -79,29 +69,29 @@ class SeededRSA {
     var valid = false;
 
     while(!valid) {
-      try {
-        p = _getPrime(keySize);
-        q = _getPrime(keySize);
-        if(p < q){
-          var t = p;
-          p = q;
-          q = p;
-        }
+        try{
+          p = seededRandom.randomPrimeBigInt(keySize-qs);
+          q = seededRandom.randomPrimeBigInt(qs);
+          if(p < q){
+            var t = p;
+            p = q;
+            q = p;
+          }
 
-        var p1 = p - BigInt.one;
-        var q1 = q - BigInt.one;
-        var phi = p1 * q1;
-        if(phi.gcd(exponent) == BigInt.one){
-          n = p * q;
-          d = exponent.modInverse(phi);
-          dmp1 = d % p1;
-          dmq1 = d % q1;
-          coeff = q.modInverse(p);
-          valid = true;
+          var p1 = p - BigInt.one;
+          var q1 = q - BigInt.one;
+          var phi = p1 * q1;
+          if(phi.gcd(exponent) == BigInt.one){
+            n = p * q;
+            d = exponent.modInverse(phi);
+            dmp1 = d % p1;
+            dmq1 = d % q1;
+            coeff = q.modInverse(p);
+            valid = true;
+          }
+        } catch(e){
+          valid = false;
         }
-      } catch (e){
-        valid = false;
-      }
     }
 
     var key = {

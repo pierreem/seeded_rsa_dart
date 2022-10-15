@@ -1,16 +1,22 @@
-import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:bip39/bip39.dart' as bip39;
 import 'dart:math';
-
 import 'package:ninja_prime/ninja_prime.dart';
 
 class SeededRandom {
   late Digest digest;
-  SeededRandom(String mnemonnic){
+  SeededRandom(String mnemonic) {
+    if(bip39.validateMnemonic(mnemonic)){
+      print("valid mnemonic");
+      digest = sha512.convert(bip39.mnemonicToSeed(mnemonic));
+    } else {
+      digest = sha512.convert(mnemonic.codeUnits);
+    }
+
     //based derivations
-    digest = sha512.convert(bip39.mnemonicToSeed(mnemonnic));
-    for(var i = 0 ; i < 2048; i++) digest = sha512.convert(digest.bytes);
+    for(var i = 0 ; i < 2048; i++) {
+      digest = sha512.convert(digest.bytes);
+    }
   }
 
   double logBase(num x, num base) => log(x) / log(base);
@@ -36,7 +42,6 @@ class SeededRandom {
     while(!bi.isPrime()){
       bi = _getNextBigInt(size);
     }
-
     return bi;
   }
 }
