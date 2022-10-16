@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
-import 'package:ninja_prime/ninja_prime.dart';
 import 'package:ninja_asn1/ninja_asn1.dart';
 import 'package:seeded_rsa/src/seeded_random.dart';
 
@@ -39,22 +37,23 @@ class SeededRSA {
     return _toPem(base64Encode(original.encode()));
   }
 
-  String publicBaseKey() {
-    var secondSequence = ASN1Sequence(
-      [
-        ASN1Integer(n),
-        ASN1Integer(e)
-      ]
-      );
-
-    String sq =  "00${base64Encode(secondSequence.encode())}";
-    var seq = ASN1Sequence(
-      [
+  String publicBaseKey(){
+    var first_sequence = ASN1Sequence([
         ASN1ObjectIdentifier.fromString('1.2.840.113549.1.1.1'),
         ASN1Null(),
-        ASN1BitString(Uint8List.fromList(sq.codeUnits))
-      ]
-      );
+        ]);
+
+    var secondSequence = ASN1Sequence([
+        ASN1Integer(n),
+        ASN1Integer(e)
+      ]);
+
+    var bitString = ASN1BitString(secondSequence.encode());
+
+    var seq = ASN1Sequence([
+        first_sequence,
+        bitString
+      ]);
 
     return _toPem(base64Encode(seq.encode()), key: "RSA PUBLIC KEY");
   }
