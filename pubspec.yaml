@@ -1,6 +1,6 @@
 name: seeded_rsa
 description: A library to generated RSA key pair with a string seed (prefer bip39).
-version: 1.0.1
+version: 1.0.2
 #homepage: https://primase.fr
 repository: https://github.com/pierreem/seeded_rsa_dart
 

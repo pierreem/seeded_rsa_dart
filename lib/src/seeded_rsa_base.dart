@@ -55,7 +55,7 @@ class SeededRSA {
         bitString
       ]);
 
-    return _toPem(base64Encode(seq.encode()), key: "RSA PUBLIC KEY");
+    return _toPem(base64Encode(seq.encode()), key: "PUBLIC KEY");
   }
 
 
